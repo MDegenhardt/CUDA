@@ -67,23 +67,36 @@ typedef struct                       /**** BMP file info structure ****/
 
 class BMPLoader{
 
-private:
+public:
 	BITMAPFILEHEADER bfh;
 	BITMAPINFOHEADER bih;
-public:
-	std::vector<RGB> pixels;
 
 public:
+
+	unsigned int getImageSize(const char* filename){
+		std::ifstream input;
+		input.open(filename, std::fstream::in | std::fstream::binary);
+
+		if (!input.is_open()) {
+			std::cout << "loadBMP: can not open " << filename << "\n";
+			return 1;
+		}
+
+		input.read((char*)&bfh, sizeof(bfh));
+		input.read((char*)&bih, sizeof(bih));
+
+		return bih.biSizeImage;
+	}
 
 	// Bild einlesen
-	std::vector<RGB> loadBMP(const char* filename) {
+	void loadBMP(const char* filename, RGB* &pixels) {
 
 		std::ifstream input;
 		input.open(filename, std::fstream::in | std::fstream::binary);
 
 		if (!input.is_open()) {
 			std::cout << "loadBMP: can not open " << filename << "\n";
-			return pixels;
+			return ;
 		}
 
 		input.read((char*)&bfh, sizeof(bfh));
@@ -100,13 +113,14 @@ public:
 			// wievieltes pixel in einer Zeile (fuer padding)
 			pixInLine = 0;
 
-			for (int x = 0; x<bih.biWidth; x++) {
+			for (int x = 0; x < bih.biWidth; x++) {
 
+				int idx = x + y * bih.biWidth;
 				input.read((char*)&pix, sizeof(pix));
 				//                 printf( "PixelR %d: %3d %3d %3d\n", i+1, pix.rgbRed, pix.rgbGreen, pix.rgbBlue );
 
 				pixInLine += sizeof(RGB);
-				pixels.push_back(pix);
+				pixels[idx] = pix;
 
 			}
 			// padding
@@ -118,12 +132,11 @@ public:
 		}
 
 		input.close();
-		return pixels;
 
 	}
 
 	// Bild schreiben
-	void writeBMP(std::vector<RGB> pxVec, const char* flname){
+	void writeBMP(RGB* pxVec, const char* flname){
 
 		std::stringstream filename;
 		filename << flname << ".bmp";
@@ -154,7 +167,7 @@ public:
 				pix = pxVec[k];
 
 				output.write((char*)&pix, sizeof(pix));
-				printf("PixelWrite %d: %3d %3d %3d\n", k + 1, pix.rgbRed, pix.rgbGreen, pix.rgbBlue);
+				//printf("PixelWrite %d: %3d %3d %3d\n", k + 1, pix.rgbRed, pix.rgbGreen, pix.rgbBlue);
 
 				pixInLine += sizeof(RGB);
 				k++;
@@ -170,45 +183,6 @@ public:
 
 
 	}
-
-	// Filter fuer schwarz-weiss
-	std::vector<RGB> makeBlackAndWhite(std::vector<RGB> pixVec){
-
-		RGB pix, newPix;
-		int k = 0;
-		double sum = 0;
-
-		for (int j = 0; j<bih.biHeight; j++) {
-
-			for (int i = 0; i<bih.biWidth; i++) {
-
-				pix = pixVec[k];
-				sum = pix.rgbRed + pix.rgbGreen + pix.rgbBlue;
-				if (sum >= 3.0*255.0 / 2.0) {
-					newPix.rgbRed = 255;
-					newPix.rgbGreen = 255;
-					newPix.rgbBlue = 255;
-				}
-				else {
-					newPix.rgbRed = 0;
-					newPix.rgbGreen = 0;
-					newPix.rgbBlue = 0;
-				}
-				pixVec[k] = newPix;
-				printf("PixelBW %d: %3d %3d %3d\n", i + 1, pix.rgbRed, pix.rgbGreen, pix.rgbBlue);
-
-				k++;
-
-			}
-
-		}
-
-		return pixVec;
-
-	}
-
-
-
 
 };
 

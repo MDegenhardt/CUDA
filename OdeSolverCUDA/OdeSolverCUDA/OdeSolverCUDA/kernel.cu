@@ -23,7 +23,7 @@ int main(void)
 	newFilename[3] = "redgreen";
 	newFilename[4] = "waterdropNew";
 	newFilename[5] = "redgreenSmallNew";
-	newFilename[6] = "highResNew.bmp";
+	newFilename[6] = "highResNew";
 
 	RGB* readPixels;
 	RGB* newPixels;

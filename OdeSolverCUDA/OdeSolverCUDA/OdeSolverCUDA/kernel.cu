@@ -7,21 +7,23 @@ __global__ void kernelMakeBlackAndWhite(RGB* pixVec, RGB* pixVecNew, int imageWi
 int main(void)
 {
 
-	std::string filename[6];
+	std::string filename[7];
 	filename[0] = "flower.bmp";
 	filename[1] = "dimix2.bmp";
 	filename[2] = "balloon.bmp";
 	filename[3] = "redgreen.bmp";
 	filename[4] = "waterdrop.bmp";
 	filename[5] = "redgreenSmall.bmp";
+	filename[6] = "highRes.bmp";
 
-	std::string newFilename[6];
+	std::string newFilename[7];
 	newFilename[0] = "flowerNew";
 	newFilename[1] = "dimix2New";
 	newFilename[2] = "balloonNew";
 	newFilename[3] = "redgreen";
 	newFilename[4] = "waterdropNew";
 	newFilename[5] = "redgreenSmallNew";
+	newFilename[6] = "highResNew.bmp";
 
 	RGB* readPixels;
 	RGB* newPixels;
@@ -40,6 +42,12 @@ int main(void)
 	//Bild importieren
 	b.loadBMP((filename[idx]).c_str(), readPixels);
 
+	// Zeit messen
+	cudaEvent_t     start, stop;
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+	cudaEventRecord(start, 0);
+
 	//GPU Speicher allokieren
 	cudaMalloc((void**) &dev_pixels, imageSize);
 	cudaMalloc((void**) &dev_pixels_new, imageSize);
@@ -54,6 +62,16 @@ int main(void)
 
 	//Berechnetes Bild zurueckkopieren
 	cudaMemcpy(newPixels, dev_pixels_new, imageSize, cudaMemcpyDeviceToHost);
+
+	// Zeit stoppen und ausgeben
+	cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
+	float   elapsedTime;
+	cudaEventElapsedTime(&elapsedTime,start, stop);
+	printf("Zeit:  %3.1f ms\n", elapsedTime);
+
+	cudaEventDestroy(start);
+	cudaEventDestroy(stop);
 
 	//GPU Speicher freigeben
 	cudaFree(dev_pixels);
